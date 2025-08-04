@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Peta Interaktif Ternate</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; }
+    .leaflet-top.leaflet-right { top: 10px; right: 10px; }
+
+    /* Pop-up form styling */
+    #formContainer {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border: 2px solid #444;
+      z-index: 1000;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+    #formContainer label, input, textarea {
+      display: block;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    #formContainer button {
+      margin-right: 10px;
+    }
+
+    #addButton {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1002;
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #closePopup {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    #floatingMenu {
+      position: fixed;
+      top: 25px;
+      left: 70px;
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      z-index: 1001;
+    }
+
+    #floatingMenu button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: background-color 0.2s;
+      align-items: left;
+    }
+
+    #floatingMenu button:hover {
+      background-color: #218838;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="map">
+
+    
+    <div class="leaflet-control-container">
+      <div id="floatingMenu">
+        <button onclick="toggleLayer('wilayah')">🗺 Batas Wilayah</button>
+        <button onclick="toggleLayer('rt')">🏠 Rumah RT</button>
+        <button onclick="toggleLayer('fasilitas')">🏥 Fasilitas</button>
+      </div>
+    </div>
+  </div>
+    
+  <button id="addButton">Tambah Lokasi</button>
+
+  <div id="formContainer">
+    <span id="closePopup">&times;</span>
+    <form id="formTambah">
+      <label>Nama Tempat:</label>
+      <input type="text" id="nameInput" required>
+      <label>Latitude:</label>
+      <input type="number" id="latInput" step="any" required>
+      <label>Longitude:</label>
+      <input type="number" id="lngInput" step="any" required>
+      <label>Deskripsi:</label>
+      <textarea id="descInput"></textarea>
+      <label>Gambar (opsional):</label>
+      <input type="file" id="imgInput" accept="image/*">
+      <button type="submit">Simpan</button>
+      <button type="button" id="cancelButton">Batal</button>
+    </form>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([0.794, 127.387], 13);
+
+    const defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye'
+    });
+
+    const baseMaps = {
+      "Default": defaultLayer,
+      "Satelit": satelliteLayer
+    };
+
+    L.control.layers(baseMaps).addTo(map);
+
+    document.getElementById("addButton").addEventListener("click", () => {
+      document.getElementById("formContainer").style.display = "block";
+    });
+
+    document.getElementById("closePopup").addEventListener("click", () => {
+      document.getElementById("formContainer").style.display = "none";
+    });
+
+    document.getElementById("cancelButton").addEventListener("click", () => {
+      document.getElementById("formContainer").style.display = "none";
+      document.getElementById("formTambah").reset();
+    });
+
+    document.getElementById("formTambah").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("nameInput").value;
+      const lat = parseFloat(document.getElementById("latInput").value);
+      const lng = parseFloat(document.getElementById("lngInput").value);
+      const desc = document.getElementById("descInput").value;
+      const img = document.getElementById("imgInput").files[0];
+
+      let popupContent = `<b>${name}</b><br>${desc || ""}`;
+
+      if (img) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          popupContent += `<br><img src="${e.target.result}" width="150">`;
+          L.marker([lat, lng]).addTo(map).bindPopup(popupContent);
+        };
+        reader.readAsDataURL(img);
+      } else {
+        L.marker([lat, lng]).addTo(map).bindPopup(popupContent);
+      }
+
+      document.getElementById("formContainer").style.display = "none";
+      document.getElementById("formTambah").reset();
+    });
+  </script>
+</body>
+</html>

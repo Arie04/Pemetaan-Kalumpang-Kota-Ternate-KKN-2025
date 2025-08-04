@@ -92,9 +92,9 @@
     
     <div class="leaflet-control-container">
       <div id="floatingMenu">
-        <a class="active">🗺 Batas Wilayah</a>
-        <a href="/rumah-ketua-rt-dan-rw">🏠 Rumah RT</a>
-        <a href="/fasilitas-umum">🏥 Fasilitas</a>
+        <a href="../">🗺 Batas Wilayah</a>
+        <a class="active">🏠 Rumah RT</a>
+        <a href="/fasilitas-umum/">🏥 Fasilitas</a>
       </div>
     </div>
   </div>
@@ -137,57 +137,6 @@
     };
 
     L.control.layers(baseMaps).addTo(map);
-
-    fetch('/data/BATAS_RT_RW_KEL_KALUMPANG.json')
-      .then(response => response.json())
-      .then(data => {
-        const batasLayer = L.geoJSON(data, {
-          style: function(feature) {
-            return {
-              color: '#3498db',
-              weight: 1,
-              fillColor: '#3498db',
-              fillOpacity: 0.2
-            };
-          },
-          onEachFeature: function(feature, layer) {
-            layer.on({
-              mouseover: function (e) {
-                const layer = e.target;
-                layer.setStyle({
-                  fillOpacity: 0.6,
-                  fillColor: '#1b567e', // warna gelap saat hover
-                  color: '#1b567e'
-                });
-              },
-              mouseout: function (e) {
-                batasLayer.resetStyle(e.target); // kembali ke style semula
-              }
-            });
-
-            const props = feature.properties;
-            let content = "";
-            for (const key in props) {
-              content += `<b>${key}</b>: ${props[key]}<br>`;
-            }
-
-            // Tampilkan informasi pop-up
-            layer.bindPopup(content);
-
-            // Tampilkan label di atas area polygon
-            if (props.Keterangan) {
-              layer.bindTooltip(props.Keterangan, {
-                permanent: true,
-                direction: "center",
-                className: "label-style"
-              });
-            }
-          }
-        }).addTo(map);
-
-        map.fitBounds(batasLayer.getBounds());
-      })
-      .catch(err => console.error("Gagal memuat GeoJSON:", err));
 
     document.getElementById("addButton").addEventListener("click", () => {
       document.getElementById("formContainer").style.display = "block";

@@ -5,86 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 100vh; }
-    .leaflet-top.leaflet-right { top: 10px; right: 10px; }
-
-    /* Pop-up form styling */
-    #formContainer {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: white;
-      padding: 20px;
-      border: 2px solid #444;
-      z-index: 1000;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    }
-    #formContainer label, input, textarea {
-      display: block;
-      margin-bottom: 10px;
-      width: 100%;
-    }
-    #formContainer button {
-      margin-right: 10px;
-    }
-
-    #addButton {
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
-      z-index: 1002;
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #closePopup {
-      position: absolute;
-      top: 5px;
-      right: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 18px;
-    }
-    #floatingMenu {
-      position: fixed;
-      top: 25px;
-      left: 70px;
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      z-index: 1001;
-    }
-
-    #floatingMenu a {
-      text-decoration: none;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 50px;
-      font-size: 14px;
-      font-weight: bold;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      cursor: pointer;
-      transition: background-color 0.2s;
-      align-items: left;
-    }
-
-    #floatingMenu a:hover {
-      background-color: #19722c;
-    }
-    
-    #floatingMenu a.active {
-      background-color: #19722c;
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css"></link>
 </head>
 <body>
   <div id="map">
@@ -93,13 +14,12 @@
     <div class="leaflet-control-container">
       <div id="floatingMenu">
         <a class="active">🗺 Batas Wilayah</a>
-        <a href="/rumah-ketua-rt-dan-rw">🏠 Rumah RT</a>
+        <a href="/rumah-ketua-rt-dan-rw">🏠 Rumah Ketua RT/RW</a>
         <a href="/fasilitas-umum">🏥 Fasilitas</a>
       </div>
     </div>
   </div>
     
-  <button id="addButton">Tambah Lokasi</button>
 
   <div id="formContainer">
     <span id="closePopup">&times;</span>
@@ -121,7 +41,21 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([0.7890, 127.3805], 17);
+    const savedCenter = JSON.parse(localStorage.getItem('mapCenter'));
+    const savedZoom = localStorage.getItem('mapZoom');
+
+    const map = L.map('map').setView(
+      savedCenter || [0.7890, 127.3805],
+      savedZoom ? parseInt(savedZoom) : 17
+    );
+
+
+    map.on('moveend', function() {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      localStorage.setItem('mapCenter', JSON.stringify([center.lat, center.lng]));
+      localStorage.setItem('mapZoom', zoom);
+    });
 
     const defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -185,7 +119,9 @@
           }
         }).addTo(map);
 
-        map.fitBounds(batasLayer.getBounds());
+        if (!savedCenter || !savedZoom) {
+          map.fitBounds(batasLayer.getBounds());
+        }
       })
       .catch(err => console.error("Gagal memuat GeoJSON:", err));
 

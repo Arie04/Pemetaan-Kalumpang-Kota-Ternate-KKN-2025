@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Peta Interaktif Ternate</title>
+  <title>Pemetaan Kalumpang Kota Ternate KKN Unkhair 2025</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -50,6 +50,35 @@
       savedZoom ? parseInt(savedZoom) : 17
     );
 
+    let userMarker = null;
+    let userCircle = null;
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(function (position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+        const latlng = [lat, lng];
+
+        if (!userMarker) {
+          userMarker = L.marker(latlng).addTo(map).bindPopup("Anda di sini").openPopup();
+          userCircle = L.circle(latlng, { radius: accuracy }).addTo(map);
+          map.setView(latlng, 17); // hanya sekali setView saat pertama muncul
+        } else {
+          userMarker.setLatLng(latlng);
+          userCircle.setLatLng(latlng).setRadius(accuracy);
+        }
+      }, function (error) {
+        console.error("Gagal mendapatkan lokasi:", error.message);
+        alert("Tidak bisa mendapatkan lokasi: " + error.message);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+      });
+    } else {
+      alert("Peramban tidak mendukung geolokasi.");
+    }
 
     map.on('moveend', function() {
       const center = map.getCenter();

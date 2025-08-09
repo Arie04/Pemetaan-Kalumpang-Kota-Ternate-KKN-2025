@@ -11,14 +11,13 @@
 </head>
 <body>
   <div id="map">
-
-    
     <div class="leaflet-control-container">
       <div id="floatingMenu">
         <a href="../">🗺 Batas Wilayah</a>
         <a class="active">🏠 Ketua RT/RW</a>
         <a href="/fasilitas-umum">🏥 Fasilitas</a>
       </div>
+      <div id="followButton" title="Ikuti lokasi saya">🎯</div>
     </div>
   </div>
     
@@ -53,34 +52,56 @@
 
     let userMarker = null;
     let userCircle = null;
+    let followUser = false;
 
-    if ("geolocation" in navigator) {
-      navigator.geolocation.watchPosition(function (position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const accuracy = position.coords.accuracy;
-        const latlng = [lat, lng];
+    document.getElementById("followButton").addEventListener("click", () => {
+      followUser = !followUser;
+      const btn = document.getElementById("followButton");
 
-        if (!userMarker) {
-          userMarker = L.marker(latlng).addTo(map).bindPopup("Anda di sini").openPopup();
-          userCircle = L.circle(latlng, { radius: accuracy }).addTo(map);
-          map.setView(latlng, 17); // hanya sekali setView saat pertama muncul
+      if (followUser) {
+        btn.classList.add("active");
+
+        // Jalankan geolocation hanya saat tombol aktif
+        if ("geolocation" in navigator) {
+          geoWatchId = navigator.geolocation.watchPosition(function (position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const latlng = [lat, lng];
+
+            if (!userMarker) {
+              userMarker = L.marker(latlng).addTo(map).bindPopup("Anda di sini").openPopup();
+              userCircle = L.circle(latlng, { radius: accuracy }).addTo(map);
+            } else {
+              userMarker.setLatLng(latlng);
+              userCircle.setLatLng(latlng).setRadius(accuracy);
+            }
+
+            if (followUser) {
+              map.setView(latlng, 25);
+            }
+
+          }, function (error) {
+            console.error("Gagal mendapatkan lokasi:", error.message);
+            alert("Tidak bisa mendapatkan lokasi: " + error.message);
+          }, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 5000
+          });
         } else {
-          userMarker.setLatLng(latlng);
-          userCircle.setLatLng(latlng).setRadius(accuracy);
+          alert("Peramban tidak mendukung geolokasi.");
         }
-      }, function (error) {
-        console.error("Gagal mendapatkan lokasi:", error.message);
-        alert("Tidak bisa mendapatkan lokasi: " + error.message);
-      }, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 10000
-      });
-    } else {
-      alert("Peramban tidak mendukung geolokasi.");
-    }
+      } else {
+        btn.classList.remove("active");
 
+        // Hentikan pelacakan saat tombol dimatikan
+        if (geoWatchId !== null) {
+          navigator.geolocation.clearWatch(geoWatchId);
+          geoWatchId = null;
+        }
+      }
+    });
 
     map.on('moveend', function() {
       const center = map.getCenter();
